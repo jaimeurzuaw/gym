@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programa de entrenamiento — Recomposición</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --paper: #f5f1e8;
+    --paper-line: #e4ddc9;
+    --rule: #c9b896;
+    --leg: #d9457f;       /* rosado — pierna */
+    --leg-bg: #fbe6ef;
+    --push: #e07a2e;      /* naranja — empuje */
+    --push-bg: #fbeadb;
+    --pull: #3a9d6e;      /* verde — tirón */
+    --pull-bg: #e1f0e7;
+    --extra: #5b6cb8;     /* azul — refuerzo */
+    --extra-bg: #e6e9f7;
+    --edit: #fff8d6;
+    --muted: #8a7f66;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--paper);
+    background-image: repeating-linear-gradient(
+      transparent, transparent 31px, var(--paper-line) 31px, var(--paper-line) 32px
+    );
+    color: var(--ink);
+    line-height: 1.5;
+    padding: 0 0 80px;
+  }
+
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 28px 20px 22px;
+    position: relative;
+  }
+  .header-inner { max-width: 920px; margin: 0 auto; }
+  .kicker {
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--rule); font-weight: 700; margin-bottom: 6px;
+  }
+  h1 {
+    font-size: clamp(26px, 5vw, 40px); font-weight: 800;
+    letter-spacing: -0.5px; line-height: 1.05;
+  }
+  .subtitle { color: #cfc7b2; font-size: 14px; margin-top: 8px; max-width: 600px; }
+
+  .meta-bar {
+    max-width: 920px; margin: 18px auto 0; padding: 0 20px;
+    display: flex; flex-wrap: wrap; gap: 10px 24px;
+    font-size: 13px; color: var(--muted);
+  }
+  .meta-bar b { color: var(--ink); font-weight: 700; }
+
+  main { max-width: 920px; margin: 0 auto; padding: 24px 20px 0; }
+
+  .toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 20px; align-items: center;
+  }
+  .btn {
+    font: inherit; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--ink); background: transparent; color: var(--ink);
+    padding: 8px 14px; border-radius: 2px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .save-note { font-size: 12px; color: var(--muted); margin-left: auto; }
+
+  .day {
+    background: #fffdf7;
+    border: 1.5px solid var(--rule);
+    border-radius: 4px;
+    margin-bottom: 22px;
+    overflow: hidden;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.06);
+  }
+  .day-head {
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 2px solid var(--ink);
+    flex-wrap: wrap;
+  }
+  .day-tag {
+    font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 3px 10px; border-radius: 2px;
+    color: #fff;
+  }
+  .day-1 .day-tag { background: var(--leg); }
+  .day-2 .day-tag { background: var(--push); }
+  .day-3 .day-tag { background: var(--pull); }
+  .day-4 .day-tag { background: var(--extra); }
+  .day-title { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+  .day-focus { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+  .day-1 { border-left: 6px solid var(--leg); }
+  .day-2 { border-left: 6px solid var(--push); }
+  .day-3 { border-left: 6px solid var(--pull); }
+  .day-4 { border-left: 6px solid var(--extra); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); text-align: left; font-weight: 700;
+    padding: 10px 18px 8px;
+  }
+  thead th.num { text-align: center; width: 70px; }
+  tbody td {
+    padding: 11px 18px; border-top: 1px solid var(--paper-line);
+    font-size: 15px; vertical-align: middle;
+  }
+  tbody tr:hover { background: #fcf8ec; }
+  .ex-name { font-weight: 600; }
+  .ex-name .new {
+    display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: 1px;
+    color: #fff; background: var(--extra); padding: 1px 6px; border-radius: 2px;
+    margin-left: 8px; vertical-align: middle; text-transform: uppercase;
+  }
+  .ex-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .num { text-align: center; }
+  .load-cell { white-space: nowrap; }
+  input.load {
+    font: inherit; font-weight: 700; font-size: 16px; text-align: center;
+    width: 62px; padding: 6px 4px;
+    border: 1.5px dashed var(--rule); border-radius: 3px;
+    background: var(--edit); color: var(--ink);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input.load:focus {
+    outline: none; border-color: var(--push); border-style: solid;
+    box-shadow: 0 0 0 3px rgba(224,122,46,0.15);
+  }
+  input.load::-webkit-outer-spin-button,
+  input.load::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input.load[type=number] { -moz-appearance: textfield; }
+  .unit { font-size: 12px; color: var(--muted); margin-left: 4px; }
+
+  .global-note {
+    background: #fffdf7; border: 1.5px solid var(--rule); border-radius: 4px;
+    padding: 16px 18px; margin-bottom: 22px; font-size: 14px;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.06);
+  }
+  .global-note h3 {
+    font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--push); margin-bottom: 8px;
+  }
+  .global-note p { color: #443d2c; }
+  .global-note b { font-weight: 700; }
+
+  footer {
+    max-width: 920px; margin: 30px auto 0; padding: 0 20px;
+    font-size: 12px; color: var(--muted); text-align: center;
+  }
+
+  @media (max-width: 560px) {
+    thead th.detail-col, td.detail-col { display: none; }
+    .day-focus { width: 100%; margin-left: 0; margin-top: 4px; }
+    tbody td { padding: 10px 12px; }
+    thead th { padding: 10px 12px 8px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="kicker">Recomposición · 75 kg · 185 cm</div>
+    <h1>Programa de entrenamiento</h1>
+    <p class="subtitle">Split de 4 días orientado a marcar: equilibra el tren superior, mantiene la base de pierna. Toca cualquier carga para editarla — se guarda sola.</p>
+  </div>
+</header>
+
+<div class="meta-bar">
+  <span><b>3 series</b> por ejercicio</span>
+  <span><b>10–12 reps</b> · doble progresión</span>
+  <span><b>2 min</b> descanso</span>
+  <span><b>Creatina</b> 7,5 g/día</span>
+  <span>Cargas en <b>kg</b></span>
+</div>
+
+<main>
+  <div class="toolbar">
+    <button class="btn" onclick="resetLoads()">Restablecer cargas iniciales</button>
+    <button class="btn" onclick="window.print()">Imprimir</button>
+    <span class="save-note" id="saveNote">Los cambios se guardan en este dispositivo</span>
+  </div>
+
+  <!-- DÍA 1 -->
+  <section class="day day-1">
+    <div class="day-head">
+      <span class="day-tag">Día 1</span>
+      <span class="day-title">Pierna</span>
+      <span class="day-focus">Cuádriceps · femoral · glúteo</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Ejercicio</th><th class="detail-col">Notas</th><th class="num">Series×Reps</th><th class="num">Carga</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="ex-name">Hack</td><td class="detail-col ex-detail">Cuádriceps</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d1-hack" value="20"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Prensa inclinada</td><td class="detail-col ex-detail">Cuádriceps / glúteo</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d1-prensa" value="110"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Extensiones de pierna</td><td class="detail-col ex-detail">Unilateral, cada pierna</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d1-ext" value="15"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Femoral tumbado</td><td class="detail-col ex-detail">Isquios</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d1-femoral" value="54"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Hip thrust</td><td class="detail-col ex-detail">Glúteo</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d1-hip" value="70"><span class="unit">kg</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- DÍA 2 -->
+  <section class="day day-2">
+    <div class="day-head">
+      <span class="day-tag">Día 2</span>
+      <span class="day-title">Empuje</span>
+      <span class="day-focus">Pecho · hombro · tríceps</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Ejercicio</th><th class="detail-col">Notas</th><th class="num">Series×Reps</th><th class="num">Carga</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="ex-name">Press pectoral</td><td class="detail-col ex-detail">Empuje horizontal</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d2-press" value="41"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Contractora (fly)</td><td class="detail-col ex-detail">Pecho, aislamiento</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d2-fly" value="79"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Press de hombro<span class="new">Nuevo</span></td><td class="detail-col ex-detail">Deltoides frontal — empieza conservador</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d2-presshombro" value=""><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Elevaciones laterales máquina</td><td class="detail-col ex-detail">Deltoides lateral</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d2-laterales" value="50"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Fondos invertidos</td><td class="detail-col ex-detail">Tríceps</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d2-fondos" value="59"><span class="unit">kg</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- DÍA 3 -->
+  <section class="day day-3">
+    <div class="day-head">
+      <span class="day-tag">Día 3</span>
+      <span class="day-title">Tirón</span>
+      <span class="day-focus">Espalda · bíceps · deltoides posterior</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Ejercicio</th><th class="detail-col">Notas</th><th class="num">Series×Reps</th><th class="num">Carga</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="ex-name">Jalón polea alta</td><td class="detail-col ex-detail">Dorsal, anchura</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d3-jalon" value="54"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Remo máquina</td><td class="detail-col ex-detail">Dorsal, grosor — codos pegados</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d3-remo" value="54"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Dominadas asistidas / remo gironda<span class="new">Nuevo</span></td><td class="detail-col ex-detail">Tercer tirón — sube espalda a 9 series</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d3-tercer" value=""><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Pájaros máquina</td><td class="detail-col ex-detail">Deltoides posterior</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d3-pajaros" value="45"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Bíceps barra</td><td class="detail-col ex-detail">Curl con barra</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d3-biceps" value="30"><span class="unit">kg</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- DÍA 4 -->
+  <section class="day day-4">
+    <div class="day-head">
+      <span class="day-tag">Día 4</span>
+      <span class="day-title">Refuerzo</span>
+      <span class="day-focus">Pierna complementaria · hombro extra</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Ejercicio</th><th class="detail-col">Notas</th><th class="num">Series×Reps</th><th class="num">Carga</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="ex-name">Abductor</td><td class="detail-col ex-detail">Glúteo medio</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d4-abductor" value="52"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Aductor</td><td class="detail-col ex-detail">Aductores</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d4-aductor" value="54"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Femoral sentado</td><td class="detail-col ex-detail">Isquios</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d4-femoralsent" value="56"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Multipower (sentadilla)</td><td class="detail-col ex-detail">Cuádriceps / glúteo</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d4-multipower" value="80"><span class="unit">kg</span></td></tr>
+        <tr><td class="ex-name">Press de hombro 2 / laterales 2<span class="new">Opcional</span></td><td class="detail-col ex-detail">Prioriza hombro, tu punto débil</td><td class="num">3×10–12</td><td class="num load-cell"><input class="load" type="number" data-id="d4-hombro2" value=""><span class="unit">kg</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="global-note">
+    <h3>Cómo progresar</h3>
+    <p>Cuando completes <b>12 repeticiones limpias en las 3 series</b>, sube la carga y vuelve a 10 reps. En los ejercicios nuevos, empieza por debajo de lo que crees: las primeras 2 semanas busca 12 reps con técnica perfecta y anota la carga aquí. Antes de entrenar: movilidad + tu rutina de core (Tabata 20/10).</p>
+  </div>
+</main>
+
+<footer>
+  Programa de recomposición · marcar sin perder fuerza · actualiza las cargas conforme progreses
+</footer>
+
+<script>
+  const STORAGE_KEY = 'gym-cargas-v1';
+  const inputs = document.querySelectorAll('input.load');
+
+  // Cargar valores guardados
+  function loadSaved() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+    catch(e) { saved = {}; }
+    inputs.forEach(inp => {
+      const id = inp.dataset.id;
+      if (saved.hasOwnProperty(id)) inp.value = saved[id];
+    });
+  }
+
+  // Guardar al editar
+  function save() {
+    const data = {};
+    inputs.forEach(inp => { data[inp.dataset.id] = inp.value; });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      flashSaved();
+    } catch(e) {
+      document.getElementById('saveNote').textContent = 'No se pudo guardar en este navegador';
+    }
+  }
+
+  let flashTimer;
+  function flashSaved() {
+    const note = document.getElementById('saveNote');
+    note.textContent = 'Guardado ✓';
+    note.style.color = '#3a9d6e';
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => {
+      note.textContent = 'Los cambios se guardan en este dispositivo';
+      note.style.color = '';
+    }, 1400);
+  }
+
+  function resetLoads() {
+    if (!confirm('¿Restablecer todas las cargas a los valores iniciales? Se perderán tus actualizaciones.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+
+  inputs.forEach(inp => {
+    inp.addEventListener('input', save);
+    inp.addEventListener('change', save);
+  });
+
+  loadSaved();
+</script>
+</body>
+</html>
